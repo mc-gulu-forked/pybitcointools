@@ -7,6 +7,9 @@ from .wallet_utils import is_new_seed
 from bisect import bisect_left
 import unicodedata
 
+import logging
+log = logging.getLogger(__name__)
+
 wordlist_english=[word.strip() for word in list(open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'english.txt'),'r'))]
 
 ELECTRUM_VERSION = '3.0.5'   # version of the client package
@@ -223,7 +226,7 @@ def words_mine(prefix,entbits,satisfunction,wordlist=wordlist_english,randombits
     while(not satisfunction(entropy_to_words(eint_to_bytes(pint+dint,entbits)))):
         dint=randombits(mine_bits)
         if((count & 0xFFFF) == 0):
-            print("Searched %f percent of the space" % (float(count)/float(1 << mine_bits)))
+            log.debug("Searched %f percent of the space" % (float(count)/float(1 << mine_bits)))
 
     return entropy_to_words(eint_to_bytes(pint+dint,entbits))
 

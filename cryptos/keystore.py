@@ -32,6 +32,8 @@ from .deterministic import *
 from .main import *
 
 
+import logging
+log = logging.getLogger(__name__)
 
 class KeyStore(object):
 
@@ -378,12 +380,12 @@ class Hardware_KeyStore(KeyStore, Xpub):
     def unpaired(self):
         '''A device paired with the wallet was diconnected.  This can be
         called in any thread context.'''
-        print("unpaired")
+        log.debug("unpaired")
 
     def paired(self):
         '''A device paired with the wallet was (re-)connected.  This can be
         called in any thread context.'''
-        print("paired")
+        log.debug("paired")
 
     def can_export(self):
         return False
