@@ -65,8 +65,8 @@ class BcWallet(object):
     def generate(self, type, net):
         self.coinType = type
         self.coinNet = net
-        log.info("coinType: {}, coinNet: {}".format(self.coinType, self.coinNet))
         self.isTestnet = isTestnet(self.coinType, net)
+        log.debug("coinType: {}, coinNet(testnet={}): {}".format(self.coinType, self.isTestnet, self.coinNet))
 
         entropy = os.urandom(16)
         self.words = cryptos.entropy_to_words(entropy) 
