@@ -4,7 +4,7 @@ Usage:
     bitcell_core.py new_wallet [--coin_type=(btc|bch|doge) --testnet]
     bitcell_core.py get_balance [--coin_type=(btc|bch|doge) --testnet] --addr=<addr>
     bitcell_core.py send_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_addr=<dest_addr> --coin_value=<coin_value> --fee=<tx_fee>
-    bitcell_core.py verify_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid>
+    bitcell_core.py verify_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid> --dest_addr=<dest_addr>
     bitcell_core.py pub_2_addr [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> 
     bitcell_core.py verify [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> --msg=<msg> --sig=<sig>
     bitcell_core.py test [--coin_type=(btc|bch|doge) --testnet]
@@ -73,6 +73,7 @@ class CmdHandlers:
 
     def verify_tx(cls, args):
         txid = args['--txid']
+        addr = args['--dest_addr']
         fetched = None
         try:
             fetched = cls._coinNet.fetchtx(txid)
@@ -82,12 +83,21 @@ class CmdHandlers:
         if not isinstance(fetched, dict):
             raise bitcell.Error("invalid fetchtx() result: %s" % repr(fetched))
 
+        rcv = 0.0
+        outputs = fetched['out']
+        for o in outputs:
+            if o['addr'] == addr:
+                rcv = float(o['value']) / 100000000.0
+                break
+        else:
+            raise bitcell.Error("fetchtx() doesn't have valid output:")
+        
         if 'block_height' not in fetched:
-            return json.dumps({ 'confirmations': 0 })
+            return json.dumps({ 'confirmations': 0, 'value': rcv })
                 
         height = fetched['block_height']
         cur_height = cls._coinNet.current_block_height()
-        return json.dumps({ 'confirmations': cur_height - height + 1 })
+        return json.dumps({ 'confirmations': cur_height - height + 1, 'value': rcv })
 
     def pub_2_addr(cls, args):
         pubkey = args['--pub_key']
