@@ -3,6 +3,8 @@
 Usage:
     bitcell_core.py new_wallet [--coin_type=(btc|bch|doge) --testnet]
     bitcell_core.py get_balance [--coin_type=(btc|bch|doge) --testnet] --addr=<addr>
+    bitcell_core.py make_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_addr=<dest_addr> --coin_value=<coin_value> --fee=<tx_fee>
+    bitcell_core.py push_tx [--coin_type=(btc|bch|doge) --testnet] --tx=<tx>
     bitcell_core.py send_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_addr=<dest_addr> --coin_value=<coin_value> --fee=<tx_fee>
     bitcell_core.py verify_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid> --dest_addr=<dest_addr>
     bitcell_core.py pub_2_addr [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> 
@@ -45,6 +47,9 @@ g_isDebugging = True
 # cmd handlers
 
 class CmdHandlers:
+    #pylint: disable=E0213
+    #  Method should have "self" as first argument
+
     _coinType = bitcell.CT_BTC
     _coinNet = None
 
@@ -62,13 +67,23 @@ class CmdHandlers:
         v = sum(unspent['value'] for unspent in unspents)
         return json.dumps({ 'value': v })
 
-    def send_tx(cls, args):
+    def _create_tx(cls, args):
         priv = args['--priv_key']
         dest = args['--dest_addr']
         v = int(float(args["--coin_value"]) * 100000000)
         tx_fee = int(float(args["--fee"]) * 100000000)
-        tx = cls._coinNet.preparesignedtx(priv, dest, v, fee=tx_fee)
-        log.debug("tx created. (v=%d, fee=%d, tx=%s)", v, tx_fee, tx)
+        return cls._coinNet.preparesignedtx(priv, dest, v, fee=tx_fee)
+
+    def make_tx(cls, args):
+        tx = cls._create_tx(args)
+        return json.dumps({ 'tx': tx })
+
+    def push_tx(cls, args):
+        tx = args['--tx']
+        return cls._coinNet.pushtx(tx)
+
+    def send_tx(cls, args):
+        tx = cls._create_tx(args)
         return cls._coinNet.pushtx(tx)
 
     def verify_tx(cls, args):
