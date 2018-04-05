@@ -75,7 +75,7 @@ class CmdHandlers:
         return cls._coinNet.preparesignedtx(priv, dest, v, fee=tx_fee)
 
     def make_tx(cls, args):
-        tx = cls._create_tx(args)
+        tx = cls._create_tx(cls, args)
         return json.dumps({ 'tx': tx })
 
     def push_tx(cls, args):
@@ -83,7 +83,7 @@ class CmdHandlers:
         return cls._coinNet.pushtx(tx)
 
     def send_tx(cls, args):
-        tx = cls._create_tx(args)
+        tx = cls._create_tx(cls, args)
         return cls._coinNet.pushtx(tx)
 
     def verify_tx(cls, args):
