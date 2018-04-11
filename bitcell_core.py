@@ -3,9 +3,8 @@
 Usage:
     bitcell_core.py new_wallet [--coin_type=(btc|bch|doge) --testnet]
     bitcell_core.py get_balance [--coin_type=(btc|bch|doge) --testnet] --addr=<addr>
-    bitcell_core.py make_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_addr=<dest_addr> --coin_value=<coin_value> --fee=<tx_fee>
+    bitcell_core.py make_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_pairs=<dest_pairs> --fee=<tx_fee>
     bitcell_core.py push_tx [--coin_type=(btc|bch|doge) --testnet] --tx=<tx>
-    bitcell_core.py send_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_addr=<dest_addr> --coin_value=<coin_value> --fee=<tx_fee>
     bitcell_core.py verify_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid> --dest_addr=<dest_addr>
     bitcell_core.py pub_2_addr [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> 
     bitcell_core.py verify [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> --msg=<msg> --sig=<sig>
@@ -67,23 +66,31 @@ class CmdHandlers:
         v = sum(unspent['value'] for unspent in unspents)
         return json.dumps({ 'value': v })
 
-    def _create_tx(cls, args):
-        priv = args['--priv_key']
-        dest = args['--dest_addr']
-        v = int(float(args["--coin_value"]) * 100000000)
-        tx_fee = int(float(args["--fee"]) * 100000000)
-        return cls._coinNet.preparesignedtx(priv, dest, v, fee=tx_fee)
-
     def make_tx(cls, args):
-        tx = cls._create_tx(cls, args)
+        priv = args['--priv_key']
+        dest_pairs = args['--dest_pairs'].split(',')
+        if not dest_pairs:
+            raise bitcell.Error("no valid pairs found in '--dest_pairs'")
+
+        targets = []
+        for p in dest_pairs:
+            try:
+                addr, v = p.split(':')
+                value = int(float(v) * 100000000)
+                targets.append("{}:{}".format(addr, value))
+            except:
+                raise bitcell.Error("'--dest_pairs' element parsing error: " + p)
+
+        try:
+            tx_fee = int(float(args["--fee"]) * 100000000)
+        except:
+            raise bitcell.Error("'--fee' parsing error: " + args["--fee"])
+            
+        tx = cls._coinNet.preparesignedmultitx(priv, *targets, tx_fee)
         return json.dumps({ 'tx': tx })
 
     def push_tx(cls, args):
         tx = args['--tx']
-        return cls._coinNet.pushtx(tx)
-
-    def send_tx(cls, args):
-        tx = cls._create_tx(cls, args)
         return cls._coinNet.pushtx(tx)
 
     def verify_tx(cls, args):
@@ -158,6 +165,9 @@ def protected_main():
 def main():
     try:
         output_on_succ = protected_main()
+        if not output_on_succ:
+            raise bitcell.Error("BAD_CODE: no return from main on success (json expected)")
+
         bitcell.stdout_write(output_on_succ)
         return 0
     except bitcell.Error as e:
