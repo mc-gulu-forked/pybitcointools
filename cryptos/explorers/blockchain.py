@@ -2,6 +2,7 @@ import re
 import requests
 from cryptos.transaction import public_txhash
 from .utils import parse_addr_args
+from .bc_shared import request_push_tx
 
 def get_url(coin_symbol):
     if coin_symbol == "BTC":
@@ -67,16 +68,9 @@ def pushtx(tx, coin_symbol="BTC"):
 
     base_url = get_url(coin_symbol)
     url = sendtx_url % base_url
-    hash = public_txhash(tx)
-    response = requests.post(url, {'tx': tx})
-    if response.status_code == 200:
-        return {'status': 'success',
-                'data': {
-                    'txid': hash,
-                    'network': coin_symbol
-                    }
-                }
-    return response
+
+    #gulu: this is wrapped to be shared across coins later
+    return request_push_tx(url, tx, coin_symbol)
 
 # Gets the transaction output history of a given set of addresses,
 # including whether or not they have been spent
