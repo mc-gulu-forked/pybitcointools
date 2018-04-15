@@ -91,7 +91,7 @@ class CmdHandlers:
 
     def push_tx(cls, args):
         tx = args['--tx']
-        return cls._coinNet.pushtx(tx)
+        return json.dumps(cls._coinNet.pushtx(tx))
 
     def verify_tx(cls, args):
         txid = args['--txid']
