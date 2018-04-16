@@ -5,7 +5,7 @@ Usage:
     bitcell_core.py get_balance [--coin_type=(btc|bch|doge) --testnet] --addr=<addr>
     bitcell_core.py make_tx [--coin_type=(btc|bch|doge) --testnet] --priv_key=<privkey> --dest_pairs=<dest_pairs> --fee=<tx_fee>
     bitcell_core.py push_tx [--coin_type=(btc|bch|doge) --testnet] --tx=<tx>
-    bitcell_core.py verify_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid> --dest_addr=<dest_addr>
+    bitcell_core.py get_tx [--coin_type=(btc|bch|doge) --testnet] --txid=<txid>
     bitcell_core.py pub_2_addr [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> 
     bitcell_core.py verify [--coin_type=(btc|bch|doge) --testnet] --pub_key=<pubkey> --msg=<msg> --sig=<sig>
     bitcell_core.py test [--coin_type=(btc|bch|doge) --testnet]
@@ -33,6 +33,8 @@ import json
 
 import cryptos
 import bitcell
+
+import pprint
 
 log = logging.getLogger(__name__)
 
@@ -93,9 +95,8 @@ class CmdHandlers:
         tx = args['--tx']
         return json.dumps(cls._coinNet.pushtx(tx))
 
-    def verify_tx(cls, args):
+    def get_tx(cls, args):
         txid = args['--txid']
-        addr = args['--dest_addr']
         fetched = None
         try:
             fetched = cls._coinNet.fetchtx(txid)
@@ -105,21 +106,19 @@ class CmdHandlers:
         if not isinstance(fetched, dict):
             raise bitcell.Error("invalid fetchtx() result: %s" % repr(fetched))
 
-        rcv = 0.0
-        outputs = fetched['out']
-        for o in outputs:
-            if o['addr'] == addr:
-                rcv = float(o['value']) / 100000000.0
-                break
-        else:
-            raise bitcell.Error("fetchtx() doesn't have valid output:")
+        # pp = pprint.PrettyPrinter(width=41, compact=True)
+        # pp.pprint(fetched)
+
+        outputs = {}
+        for o in fetched['out']:
+            outputs[o['addr']] = float(o['value']) / 100000000.0
         
         if 'block_height' not in fetched:
             return json.dumps({ 'confirmations': 0, 'value': rcv })
                 
         height = fetched['block_height']
         cur_height = cls._coinNet.current_block_height()
-        return json.dumps({ 'confirmations': cur_height - height + 1, 'value': rcv })
+        return json.dumps({ 'confirmations': cur_height - height + 1, 'output': outputs })
 
     def pub_2_addr(cls, args):
         pubkey = args['--pub_key']
