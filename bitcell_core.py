@@ -113,12 +113,11 @@ class CmdHandlers:
         for o in fetched['out']:
             outputs[o['addr']] = float(o['value']) / 100000000.0
         
-        if 'block_height' not in fetched:
-            return json.dumps({ 'confirmations': 0, 'value': rcv })
-                
-        height = fetched['block_height']
-        cur_height = cls._coinNet.current_block_height()
-        return json.dumps({ 'confirmations': cur_height - height + 1, 'output': outputs })
+        confirmations = 0
+        if 'block_height' in fetched:
+            height = fetched['block_height']
+            confirmations = cls._coinNet.current_block_height() - height + 1
+        return json.dumps({ 'confirmations': confirmations, 'output': outputs })
 
     def pub_2_addr(cls, args):
         pubkey = args['--pub_key']
