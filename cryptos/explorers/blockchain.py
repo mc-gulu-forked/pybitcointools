@@ -69,8 +69,8 @@ def pushtx(tx, coin_symbol="BTC"):
     base_url = get_url(coin_symbol)
     url = sendtx_url % base_url
 
-    #gulu: this is wrapped to be shared across coins later
-    return request_push_tx(url, tx, coin_symbol)
+    #gulu: wrapped to be shared across coins
+    return request_push_tx(url, tx, coin_symbol, 'tx')
 
 # Gets the transaction output history of a given set of addresses,
 # including whether or not they have been spent

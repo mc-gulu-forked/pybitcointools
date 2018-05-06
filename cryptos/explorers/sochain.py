@@ -1,5 +1,6 @@
 import re
 import requests
+from .bc_shared import request_push_tx
 
 #Docs: https://chain.so/api
 
@@ -55,8 +56,10 @@ def pushtx(tx, coin_symbol="LTC"):
     if not re.match('^[0-9a-fA-F]*$', tx):
         tx = tx.encode('hex')
     url = sendtx_url % coin_symbol
-    response = requests.post(url, {'tx_hex': tx})
-    return response.json()
+
+    #gulu: wrapped to be shared across coins
+    return request_push_tx(url, tx, coin_symbol, 'tx_hex')
+
 
 def history(addr, coin_symbol="LTC"):
     url = address_url % (coin_symbol, addr)

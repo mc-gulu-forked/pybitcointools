@@ -110,9 +110,15 @@ class CmdHandlers:
         # pp.pprint(fetched)
 
         outputs = {}
-        for o in fetched['out']:
-            outputs[o['addr']] = float(o['value']) / 100000000.0
-        
+        if cls._coinType == bitcell.CT_BTC:
+            for o in fetched['out']:
+                outputs[o['addr']] = float(o['value']) / 100000000.0
+        elif cls._coinType == bitcell.CT_DOGE:
+            for o in fetched['outputs']:
+                outputs[o['address']] = float(o['value']) 
+        else:
+            raise bitcell.Error("not implemented yet for other coins!")
+
         confirmations = 0
         if 'block_height' in fetched:
             height = fetched['block_height']

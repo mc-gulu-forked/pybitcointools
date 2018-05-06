@@ -13,9 +13,9 @@ ErrText = {
     ERR_FeeNotEnough:   "fee not enough",
 }
 
-def request_push_tx(url, tx, coin_symbol):
+def request_push_tx(url, tx, coin_symbol, txName):
     hash = public_txhash(tx)
-    response = requests.post(url, {'tx': tx})
+    response = requests.post(url, {txName: tx})
     if response.status_code == 200:
         return {'status': 'success',
                 'data': {
