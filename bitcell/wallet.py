@@ -21,12 +21,15 @@ BCH_TestNet = cryptos.BitcoinCash(testnet=True)
 DOGE_MainNet = cryptos.Doge(testnet=False)
 DOGE_TestNet = cryptos.Doge(testnet=True)
 
+def isTestnetName(typeStr):
+    return typeStr in ['btctest', 'bchtest', 'dogetest']
+
 def getType(typeStr):
-    if typeStr == 'btc':
+    if typeStr == 'btc' or typeStr == 'btctest':
         return CT_BTC
-    elif typeStr == 'bch':
+    elif typeStr == 'bch' or typeStr == 'bchtest':
         return CT_BCH
-    elif typeStr == 'doge':
+    elif typeStr == 'doge' or typeStr == 'dogetest':
         return CT_DOGE
     else:
         raise Exception("unkown net: type-{}".format(typeStr))
@@ -43,11 +46,11 @@ def getNet(type, isTestnet):
 
 def isTestnet(type, net):
     if type == CT_BTC:
-        return net != BTC_MainNet 
+        return net != BTC_MainNet
     elif type == CT_BCH:
-        return net != BCH_MainNet 
+        return net != BCH_MainNet
     elif type == CT_DOGE:
-        return net != DOGE_MainNet 
+        return net != DOGE_MainNet
     else:
         raise Exception("unkown net: type-{}".format(type))
 
@@ -69,7 +72,7 @@ class BcWallet(object):
         log.debug("coinType: {}, coinNet(testnet={}): {}".format(self.coinType, self.isTestnet, self.coinNet))
 
         entropy = os.urandom(16)
-        self.words = cryptos.entropy_to_words(entropy) 
+        self.words = cryptos.entropy_to_words(entropy)
         self.wallet = self.coinNet.wallet(self.words)
         self.addr = self.wallet.new_receiving_address()
         self.privkey = self.wallet.privkey(self.addr)

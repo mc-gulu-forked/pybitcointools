@@ -3,17 +3,18 @@ import os
 import sys
 import base64
 import logging
-import time 
-import json 
+import time
+import json
 import pprint
 
 log = logging.getLogger(__name__)
 
+
 def init_logging(logDir, isDebugging=False):
-    ''' initialize logging 
+    ''' initialize logging
     '''
     if not os.path.exists(logDir):
-        os.mkdir(logDir) 
+        os.mkdir(logDir)
 
     log_file = os.path.join(logDir, "{}.log".format(time.strftime("%Y-%m-%d", time.localtime())))
     log_format = '%(asctime)-15s %(levelname)-5s %(name)5s: %(message)s'
@@ -50,9 +51,28 @@ def stdout_write(data, b64Encode=False, jsonPretty=False):
 
     sys.stdout.write(output or "")
 
+
+class Result:
+    def __init__(self, code, msg, data=None):
+        self.code = code
+        self.msg = msg
+
+        if data is None:
+            self.data = {}
+        elif isinstance(data, dict):
+            self.data = data
+        else:
+            self.data = {"detail": {"text": data}}
+
+    def toJson(self):
+        return json.dumps(self.__dict__)
+
+
 class Error (Exception):
-    def __init__(self, err_info):
-        self.errInfo = err_info
+    def __init__(self, err_code, err_msg, err_info=""):
+        self.code = err_code
+        self.msg = err_msg
+        self.data = {"detail": {"text": err_info}}
 
     def toJson(self):
         return json.dumps(self.__dict__)
@@ -60,6 +80,5 @@ class Error (Exception):
 class UnexpectedError (Error):
     def __init__(self, e):
         detailedInfo = "BUnexpectedError: " + repr(e)
-        super(UnexpectedError, self).__init__(detailedInfo)
+        super(UnexpectedError, self).__init__(-1, "BUnexpectedError", detailedInfo)
         log.debug(detailedInfo, exc_info=True)
-

@@ -482,13 +482,17 @@ def is_pubkey(pubkey):
 
 def encode_sig(v, r, s):
     vb, rb, sb = from_int_to_byte(v), encode(r, 256), encode(s, 256)
-    
+
     result = base64.b64encode(vb+b'\x00'*(32-len(rb))+rb+b'\x00'*(32-len(sb))+sb)
     return result if is_python2 else str(result, 'utf-8')
 
 
 def decode_sig(sig):
     bytez = base64.b64decode(sig)
+    return from_byte_to_int(bytez[0]), decode(bytez[1:33], 256), decode(bytez[33:], 256)
+
+def decode_sig_hex(sig):
+    bytez = binascii.unhexlify(sig)
     return from_byte_to_int(bytez[0]), decode(bytez[1:33], 256), decode(bytez[33:], 256)
 
 # https://tools.ietf.org/html/rfc6979#section-3.2
@@ -523,7 +527,7 @@ def ecdsa_raw_sign(msghash, priv):
 def ecdsa_sign(msg, priv, coin):
     v, r, s = ecdsa_raw_sign(electrum_sig_hash(msg), priv)
     sig = encode_sig(v, r, s)
-    assert ecdsa_verify(msg, sig, 
+    assert ecdsa_verify(msg, sig,
         privtopub(priv), coin), "Bad Sig!\t %s\nv = %d\n,r = %d\ns = %d" % (sig, v, r, s)
     return sig
 
@@ -582,7 +586,7 @@ def ecdsa_recover(msg, sig):
 
 
 
-# add/subtract 
+# add/subtract
 def add(p1,p2):
     if is_privkey(p1):
         return add_privkeys(p1, p2)
